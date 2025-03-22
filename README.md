@@ -146,3 +146,9 @@ ELF is designed to be:
 - **Versatile**: Can be used for different types of files (executables, object files, shared libraries)[4][6]
 
 Unlike Windows which uses the PE (Portable Executable) format, Linux and Unix systems rely on ELF for their executable files.
+
+### Booting
+
+Booting an operating system consists of transferring control along a chain of small programs, each one more “powerful” than the previous one, where the operating system is the last “program”. See the following figure for an example of the boot process:
+
+![boot chain](/docs/images/boot_chain.png)
