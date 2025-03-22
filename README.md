@@ -2,6 +2,51 @@
 
 Building a tiny OS for learning purposes using [The Little Book about OS development](https://littleosbook.github.io/)
 
+## Useful commands
+
+**Build loader.o**
+
+```bash
+nasm -f elf32 loader.s -o loader.o
+```
+
+**Build kernel.bin**
+
+```bash
+i386-elf-ld -T link.ld -o kernel.bin loader.o
+```
+
+**Building the iso**
+
+```bash
+mkisofs -R \
+    -b boot/grub/stage2_eltorito \
+    -no-emul-boot \
+    -boot-load-size 4 \
+    -A os \
+    -input-charset utf8 \
+    -quiet \
+    -boot-info-table \
+    -o os.iso \
+    iso
+```
+
+**Running the OS in QEMU**
+
+```bash
+qemu-system-x86_64 -cdrom os.iso -m 32 -monitor tcp:localhost:4444,server,nowait
+```
+
+then in a different terminal run
+
+```bash
+nc localhost 4444 
+#or telnet instead of nc
+
+#then run
+info registers
+```
+
 ## Prerequesites 
 
 ### Hexadecimal system
@@ -318,3 +363,4 @@ Each section definition in the script specifies a part of the binary and how it 
   - **`ENTRY(loader)`:** Sets the starting point of the program.
   - **`. = 0x00100000;`:** Loads the code at the 1 MB mark.
   - **Section definitions (`.text`, `.rodata`, `.data`, `.bss`):** Organize and align the code and data into the binary according to their usage and memory requirements.
+
