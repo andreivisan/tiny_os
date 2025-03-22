@@ -152,3 +152,169 @@ Unlike Windows which uses the PE (Portable Executable) format, Linux and Unix sy
 Booting an operating system consists of transferring control along a chain of small programs, each one more “powerful” than the previous one, where the operating system is the last “program”. See the following figure for an example of the boot process:
 
 ![boot chain](/docs/images/boot_chain.png)
+
+### What is a linker?
+
+A linker is a crucial tool in the software build process that combines multiple object files (compiled code) into a single executable or binary image. In the context of OS development, the linker (often guided by a linker script) ensures that every piece of code and data is placed at the correct memory addresses, which is critical for bootstrapping and running the OS.
+
+Below, we break down the key points and explain the provided linker script in detail.
+
+---
+
+### 1. What Is a Linker?
+
+- **Definition:**  
+  A linker is a program that takes object files—outputs from the compiler—and merges them into a single executable, library, or binary image.
+
+- **Primary Functions:**  
+  - **Symbol Resolution:** It connects function calls and variable references to their definitions across multiple object files.
+  - **Address Assignment:** It assigns final memory addresses to all symbols (functions, global variables, etc.).
+  - **Section Placement:** It organizes code and data into sections (like `.text`, `.data`, `.bss`) according to a defined layout, which is especially important in low-level programming.
+
+---
+
+#### 2. Role of a Linker in OS Building
+
+When building an operating system, especially one that must run directly on hardware (or in an emulator), you need precise control over where code and data reside in memory. Here’s why the linker is essential in this process:
+
+- **Custom Memory Layout:**  
+  OS kernels must often reside at specific addresses in memory (for example, the first megabyte might be reserved for boot code or hardware services). The linker script allows you to specify these addresses explicitly.
+
+- **Combining Code from Multiple Sources:**  
+  OS projects typically consist of code written in different languages (like C and assembly) and spread across multiple files. The linker ensures that these disparate pieces are correctly assembled into a coherent whole.
+
+- **Ensuring Alignment:**  
+  Many hardware architectures require that code and data be aligned on certain boundaries (e.g., 4 KB boundaries for page alignment). Proper alignment can enhance performance and meet the expectations of the hardware.
+
+- **Creating a Bootable Image:**  
+  The OS must be structured in such a way that the bootloader (or firmware) knows exactly where to jump to start executing the kernel. The linker script’s `ENTRY` directive and section placement are key to creating a bootable image.
+
+---
+
+#### 3. Detailed Explanation of the Provided Linker Script
+
+```ld
+ENTRY(loader)                /* the name of the entry label */
+
+SECTIONS {
+    . = 0x00100000;          /* the code should be loaded at 1 MB */
+
+    .text ALIGN (0x1000) :   /* align at 4 KB */
+    {
+        *(.text)             /* all text sections from all files */
+    }
+
+    .rodata ALIGN (0x1000) : /* align at 4 KB */
+    {
+        *(.rodata*)          /* all read-only data sections from all files */
+    }
+
+    .data ALIGN (0x1000) :   /* align at 4 KB */
+    {
+        *(.data)             /* all data sections from all files */
+    }
+
+    .bss ALIGN (0x1000) :    /* align at 4 KB */
+    {
+        *(COMMON)            /* all COMMON sections from all files */
+        *(.bss)              /* all bss sections from all files */
+    }
+}
+```
+
+#### ENTRY(loader)
+
+- **What It Does:**  
+  The `ENTRY(loader)` directive tells the linker that the starting point of the executable is the symbol `loader`.  
+- **Context in OS Development:**  
+  This is critical because the bootloader (or early kernel initialization code) must begin execution at a known point. By specifying `loader`, you ensure that when the OS is loaded into memory, the processor jumps to the correct starting location.
+
+#### Setting the Load Address: `. = 0x00100000;`
+
+- **What It Does:**  
+  The line `. = 0x00100000;` sets the location counter to `0x00100000` (which is 1 MB). This tells the linker that the following sections should be placed starting at this address.
+- **Context in OS Development:**  
+  Many OS designs, especially those following legacy PC boot conventions, load the kernel at the 1 MB mark to avoid conflicts with the bootloader and to conform with hardware expectations.
+
+#### Section Definitions
+
+Each section definition in the script specifies a part of the binary and how it should be placed and aligned in memory.
+
+#### .text Section
+
+```ld
+.text ALIGN (0x1000) :
+{
+    *(.text)
+}
+```
+
+- **Purpose:**  
+  The `.text` section contains the executable code.
+- **Alignment:**  
+  `ALIGN (0x1000)` ensures the section starts at a 4 KB boundary (0x1000 = 4096 bytes). This is often required for proper memory paging.
+- **Inclusion of Files:**  
+  The pattern `*(.text)` means “include all `.text` sections from every object file.” This aggregates all the executable code into one contiguous block.
+
+#### .rodata Section
+
+```ld
+.rodata ALIGN (0x1000) :
+{
+    *(.rodata*)
+}
+```
+
+- **Purpose:**  
+  The `.rodata` section contains read-only data such as constant strings or immutable data.
+- **Pattern:**  
+  The wildcard `*(.rodata*)` includes any section that begins with `.rodata`. This is useful if there are variations (e.g., `.rodata.str1.1`).
+
+#### .data Section
+
+```ld
+.data ALIGN (0x1000) :
+{
+    *(.data)
+}
+```
+
+- **Purpose:**  
+  The `.data` section holds initialized global and static variables.
+- **Importance:**  
+  Data that can change during execution but has a known starting value is placed here.
+
+#### .bss Section
+
+```ld
+.bss ALIGN (0x1000) :
+{
+    *(COMMON)
+    *(.bss)
+}
+```
+
+- **Purpose:**  
+  The `.bss` section is used for uninitialized global and static variables. The space is reserved in memory, but no actual data is stored in the binary (it is typically zero-initialized at runtime).
+- **Inclusion of COMMON:**  
+  `*(COMMON)` collects any common symbols that weren’t explicitly placed in another section.
+- **Alignment:**  
+  As with other sections, alignment is specified to ensure proper placement in memory.
+
+---
+
+#### 4. Summary
+
+- **Linker Definition:**  
+  A tool that combines object files into an executable, resolving symbols and assigning memory addresses.
+
+- **Role in OS Development:**  
+  - Controls the memory layout of the OS.
+  - Resolves addresses and symbols from multiple source files.
+  - Ensures the executable is bootable by defining the entry point and proper memory placement.
+  - Aligns code and data sections according to hardware requirements.
+
+- **Specific Script Breakdown:**  
+  - **`ENTRY(loader)`:** Sets the starting point of the program.
+  - **`. = 0x00100000;`:** Loads the code at the 1 MB mark.
+  - **Section definitions (`.text`, `.rodata`, `.data`, `.bss`):** Organize and align the code and data into the binary according to their usage and memory requirements.
