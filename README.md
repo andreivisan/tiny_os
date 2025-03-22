@@ -105,3 +105,44 @@ while (x) {
 - Performance:
 
     - Bitwise operations are low-level, fast operations that are ideal for performance-critical code in an operating system.
+
+## Random bits I need to learning
+
+An ELF (Executable and Linkable Format) executable is the standard file format for executables, object code, shared libraries, and core dumps on Linux and Unix-like systems[1][6]. Originally designed by Unix System Laboratories in collaboration with Sun Microsystems for SVR4, it first appeared in Solaris 2.0 and has since become the standard format on Unix-like systems[4][6].
+
+### Structure of ELF Files
+
+An ELF file consists of several key components:
+
+1. **ELF Header**: Located at the start of the file, it contains metadata about the file including:
+   - A magic number (0x7F followed by "ELF") that identifies it as an ELF file[3][5]
+   - Information about whether it's 32-bit or 64-bit
+   - Endianness (little or big)
+   - Target architecture
+   - Entry point address[3][5]
+
+2. **Program Header Table**: Describes segments used at runtime[1]
+
+3. **Section Header Table**: Contains information about sections used during linking[1][2]
+
+4. **Sections and Segments**: The actual data of the executable[1]
+
+### Key Sections
+
+ELF executables typically contain four main sections:
+
+- **.text**: Contains the executable code with read and execute permissions[7]
+- **.data**: Holds initialized data
+- **.rodata**: Contains read-only data
+- **.bss**: Stores uninitialized data[7]
+
+### Characteristics
+
+ELF is designed to be:
+
+- **Portable**: Used across various Unix-like systems[1]
+- **Extensible**: Supports dynamic linking, allowing code sharing between programs[1]
+- **Efficient**: Optimized for quick loading and execution[1]
+- **Versatile**: Can be used for different types of files (executables, object files, shared libraries)[4][6]
+
+Unlike Windows which uses the PE (Portable Executable) format, Linux and Unix systems rely on ELF for their executable files.
